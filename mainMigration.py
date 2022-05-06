@@ -9,14 +9,13 @@
 import numpy as np
 from numpy import arange
 from numpy import meshgrid
-from matplotlib import pyplot
+from matplotlib import pyplot, markers
 from mpl_toolkits.mplot3d import Axes3D
 
 
 import random
 import copy
 
-from randcolor import rand_cmap
 
 from methodsCrossingovers import OnePointCrossingover
 from testsFunctions import Spherical
@@ -187,6 +186,15 @@ class Population():
         Y = []
         F = []
         for i in range(len(self.populationHromosome)):
+            x = self.populationHromosome[i].gens[0].numerical
+            y = self.populationHromosome[i].gens[1].numerical
+            if ((self.settings.testFunction.getMinX() > x) and
+                (self.settings.testFunction.getMaxX() < x) and
+                (self.settings.testFunction.getMinY() > y) and
+                (self.settings.testFunction.getMaxY() < y)
+            ):
+                continue
+
             X.append(self.populationHromosome[i].gens[0].numerical)
             Y.append(self.populationHromosome[i].gens[1].numerical)
             F.append(self.populationHromosome[i].fitnessValue)
@@ -207,6 +215,19 @@ class Migration():
                 h = copy.deepcopy(population.populationHromosome[0])
                 populations[iPopulationToMigrate].populationHromosome[-1] = h
 
+# Получить маркер для популяции
+def getMarker(idPopulation):
+    idMarker = idPopulation % len(markers.MarkerStyle().filled_markers)
+    return markers.MarkerStyle().filled_markers[idMarker]
+
+# Симметричная операция сложения
+def operationAddWithChar(num1, num2):
+    out = None
+    if num1 >= 0:
+        out = num1 + num2
+    else:
+        out = num1 - num2
+    return out
 
 class Evolution():
     def __init__(self, settings):
@@ -254,7 +275,7 @@ class Evolution():
                        self.settings.testFunction.getMaxY(), 0.1)
         x, y = meshgrid(xaxis, yaxis)
         results = self.settings.testFunction.calculateZ(x, y)
-        figure = pyplot.figure(figsize=(8, 7))
+        figure = pyplot.figure(figsize=(12, 9))
         axis = figure.gca(projection='3d')
 
         axis.plot_surface(x, y, results, cmap='jet')
@@ -267,15 +288,15 @@ class Evolution():
         pyplot.cla()
         if self.fig:
             pyplot.close(self.fig)
-        self.fig = pyplot.figure(figsize=(8, 7))
+        self.fig = pyplot.figure(figsize=(12, 9))
         left, bottom, width, height = 0.1, 0.1, 0.8, 0.8
         ax = self.fig.add_axes([left, bottom, width, height])
         ax.set_title("2D Пространство")
 
-        xaxis = arange(self.settings.testFunction.getMinX(),
-                       self.settings.testFunction.getMaxX(), 0.1)
-        yaxis = arange(self.settings.testFunction.getMinY(),
-                       self.settings.testFunction.getMaxY(), 0.1)
+        xaxis = arange(operationAddWithChar(self.settings.testFunction.getMinX(), 0.3),
+                       operationAddWithChar(self.settings.testFunction.getMaxX(), 0.3), 0.1)
+        yaxis = arange(operationAddWithChar(self.settings.testFunction.getMinY(), 0.3),
+                       operationAddWithChar(self.settings.testFunction.getMaxY(), 0.3), 0.1)
         x, y = meshgrid(xaxis, yaxis)
         results = self.settings.testFunction.calculateZ(x, y)
         if self.settings.testFunction.getLevels() > 0:
@@ -292,7 +313,8 @@ class Evolution():
         if step < len(self.bestHromoByStep):
             for i,  population in enumerate(self.bestHromoByStep[step]):
                 pyplot.scatter(population["x"], population["y"],
-                               s=1, c=self.populations[i].colorScatter
+                               s=34, c=self.populations[i].colorScatter,
+                               marker=getMarker(i)
                                )
         return self.fig
 
